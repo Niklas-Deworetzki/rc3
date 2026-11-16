@@ -1,0 +1,11 @@
+begin main()
+x := 1 + (1 + 1)
+x := 2 + (2 + 2)
+end main()
+
+/*
+Error: Redeclaration of variable 'x'.
+programs/rssa/vm/passes/variables/variableRedeclaration.rssa: Line 3, column 1
+  3 | x := 2 + (2 + 2)
+    | ^
+*/

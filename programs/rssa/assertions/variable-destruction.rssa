@@ -1,0 +1,12 @@
+begin main()
+b := 0 ^ (0 + 12)
+1 := b ^ (0 + 0) // should fail here
+end main()
+
+/*
+The arithmetic assignment (line 3) destroys variable 'b' and therefore asserts that 1 == b but b is 12 (see line 2).
+Should fail with:
+
+Failed assertion: Value 12 is not equals target 1.
+	at Forward.main(../tests/rssa/vm/assertions/variable-destruction.rssa:3)
+*/

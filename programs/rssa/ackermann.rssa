@@ -1,0 +1,61 @@
+/*
+Ackermann test program with ackermann(m=2, n=8)=19, note that unfortunately m and n are named interchanged in the code but the annotation uses the right name.
+Output should look like:
+
+Variables at end of 'Forward.main' subroutine:
+m = 2
+n = 8
+result = 19
+
+Until end of program 19876881 instructions have been executed.
+*/
+
+// Code for procedure ackermann:
+begin ackermann(n_0, m_0, result_0)
+Ta_0 := 0 ^ (n_0 == 0)
+Ta_0 != 0 -> Lackermann_1(Ta_0, m_0, n_0, result_0)Lackermann_2
+Lackermann_1(Ta_1, m_1, n_1, result_1) <-
+0 := Ta_1 ^ (n_1 == 0)
+result_2 := result_1 + (m_1 + 1)
+Tb_0 := 0 ^ (n_1 == 0)
+-> Lackermann_3(Tb_0, m_1, n_1, result_2)
+Lackermann_2(Ta_2, m_2, n_2, result_3) <-
+0 := Ta_2 ^ (n_2 == 0)
+Tc_0 := 0 ^ (m_2 == 0)
+Tc_0 != 0 -> Lackermann_5(Tc_0, m_2, n_2, result_3)Lackermann_6
+Lackermann_5(Tc_1, m_3, n_3, result_4) <-
+0 := Tc_1 ^ (m_3 == 0)
+one_0 := 0 ^ (1 ^ 0)
+n1_0 := 0 ^ (n_3 - 1)
+(n1_1,one_1,result_5) := call ackermann(n1_0,one_0,result_4)
+0 := n1_1 ^ (n_3 - 1)
+0 := one_1 ^ (1 ^ 0)
+Td_0 := 0 ^ (m_3 == 0)
+-> Lackermann_7(Td_0, m_3, n_3, result_5)
+Lackermann_6(Tc_2, m_4, n_4, result_6) <-
+0 := Tc_2 ^ (m_4 == 0)
+n1_2 := 0 ^ (n_4 - 1)
+m1_0 := 0 ^ (m_4 - 1)
+tr_0 := 0 ^ (0 ^ 0)
+(n_5,m1_1,tr_1) := call ackermann(n_4,m1_0,tr_0)
+(n1_3,tr_2,result_7) := call ackermann(n1_2,tr_1,result_6)
+(n_6,m1_2,tr_3) := uncall ackermann(n_5,m1_1,tr_2)
+0 := tr_3 ^ (0 ^ 0)
+0 := m1_2 ^ (m_4 - 1)
+0 := n1_3 ^ (n_6 - 1)
+Td_1 := 0 ^ (m_4 == 0)
+-> Lackermann_8(Td_1, m_4, n_6, result_7)
+Lackermann_7(Td_2, m_5, n_7, result_8)Lackermann_8 <- Td_2 != 0
+0 := Td_2 ^ (m_5 == 0)
+Tb_1 := 0 ^ (n_7 == 0)
+-> Lackermann_4(Tb_1, m_5, n_7, result_8)
+Lackermann_3(Tb_2, m_6, n_8, result_9)Lackermann_4 <- Tb_2 != 0
+0 := Tb_2 ^ (n_8 == 0)
+end ackermann(n_8, m_6, result_9)
+
+// Code for procedure main:
+begin main(n_0 @Param(type="Int", value=0, name="m"), m_0 @Param(type="Int", value=0, name="n"), result_0 @Param(type="Int", value=0, name="result"))
+n_1 := n_0 + (2 ^ 0)
+m_1 := m_0 + (8 ^ 0)
+(n_2,m_2,result_1) := call ackermann(n_1,m_1,result_0)
+end main(n_2 @Param(type="Int", value=0, name="m"), m_2 @Param(type="Int", value=0, name="n"), result_1 @Param(type="Int", value=0, name="result"))

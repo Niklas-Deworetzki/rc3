@@ -1,0 +1,18 @@
+begin main()
+(res) := call sum(1, 2)
+(x, y) := uncall sum(3)
+end main(x, y, res)
+
+begin sum(x, y)
+res := x + (y + 0)
+2 := y + (0 + 0)
+end sum(res)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    x = 1
+    y = 2
+    res = 3
+
+*/

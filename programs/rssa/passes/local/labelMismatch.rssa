@@ -1,0 +1,9 @@
+begin main()
+-> exit()
+
+entry() <-
+end main()
+
+/*
+Error: Labels of basic blocks mismatch, missing label(s) [entry].
+*/

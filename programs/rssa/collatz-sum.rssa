@@ -1,0 +1,106 @@
+/*
+Collatz test program computing the collatz sequence with start 31 and sums the sequence up.
+Output should look like:
+
+Variables at end of 'Forward.main' subroutine:
+s = <31, 94, 47, 142, 71, 214, 107, 322, 161, 484, 242, 121, 364, 182, 91, 274, 137, 412, 206, 103, 310, 155, 466, 233, 700, 350, 175, 526, 263, 790, 395, 1186, 593, 1780, 890, 445, 1336, 668, 334, 167, 502, 251, 754, 377, 1132, 566, 283, 850, 425, 1276, 638, 319, 958, 479, 1438, 719, 2158, 1079, 3238, 1619, 4858, 2429, 7288, 3644, 1822, 911, 2734, 1367, 4102, 2051, 6154, 3077, 9232, 4616, 2308, 1154, 577, 1732, 866, 433, 1300, 650, 325, 976, 488, 244, 122, 61, 184, 92, 46, 23, 70, 35, 106, 53, 160, 80, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+sum = 101104
+
+Until end of program 6047 instructions have been executed.
+*/
+
+@Heap(size=102400)
+@Memory(value=356,address=20)
+@Entry(value="main")
+// Code for procedure collatz:
+begin collatz(c_0, trace_ref_0, trace_top_0)
+c_0 != 1 -> Lcollatz_5(c_0, trace_top_0, trace_ref_0)Lcollatz_6
+Lcollatz_5(c_1, trace_top_1, trace_ref_1) <-
+Ta_0 := 0 ^ (c_1 % 2)
+Ta_0 == 0 -> Lcollatz_11(Ta_0, c_1, trace_top_1, trace_ref_1)Lcollatz_12
+Lcollatz_6(c_2, trace_top_2, trace_ref_2) <-
+-> Lcollatz_16(trace_top_2, trace_ref_2, c_2)
+Lcollatz_11(Ta_1, c_4, trace_top_4, trace_ref_4) <-
+0 := Ta_1 ^ (c_4 % 2)
+c1_0 := 0 ^ (c_4 / 2)
+(c1_1,trace_ref_7,trace_top_7) := call collatz(c1_0,trace_ref_4,trace_top_4)
+0 := c1_1 ^ (c_4 / 2)
+Td_1 := 0 ^ (c_4 % 2)
+-> Lcollatz_13(Td_1, c_4, trace_top_7, trace_ref_7)
+Lcollatz_12(Ta_2, c_5, trace_top_5, trace_ref_5) <-
+0 := Ta_2 ^ (c_5 % 2)
+Tb_0 := 0 ^ (3 * c_5)
+c1_2 := 0 ^ (Tb_0 + 1)
+0 := Tb_0 ^ (3 * c_5)
+(c1_3,trace_ref_9,trace_top_9) := call collatz(c1_2,trace_ref_5,trace_top_5)
+Tc_0 := 0 ^ (3 * c_5)
+0 := c1_3 ^ (Tc_0 + 1)
+0 := Tc_0 ^ (3 * c_5)
+Td_0 := 0 ^ (c_5 % 2)
+-> Lcollatz_14(Td_0, c_5, trace_top_9, trace_ref_9)
+Lcollatz_13(Td_2, c_10, trace_top_12, trace_ref_12)Lcollatz_14 <- Td_2 == 0
+0 := Td_2 ^ (c_10 % 2)
+-> Lcollatz_15(trace_top_12, trace_ref_12, c_10)
+Lcollatz_15(trace_top_16, trace_ref_16, c_14)Lcollatz_16 <- c_14 != 1
+Te_0 := 0 + (trace_ref_16 + trace_top_16)
+c_15 := M[Te_0 @InBounds(size=256,base=trace_ref_16)] := c_14
+0 := 0 ^ (c_15 ^ 0)
+0 := Te_0 - (trace_ref_16 + trace_top_16)
+trace_top_17 := trace_top_16 + (1 ^ 0)
+Tf_0 := -1 + (trace_ref_16 + trace_top_17)
+c_16 := c_15 + (M[Tf_0 @InBounds(size=256,base=trace_ref_16)] ^ 0)
+-1 := Tf_0 - (trace_ref_16 + trace_top_17)
+end collatz(c_16, trace_ref_16, trace_top_17)
+
+// Code for procedure main:
+begin main(s_ref_0  @Param(name="s",size=s_top_0,type="Stack",value=100), s_top_0  @Param(type="Int",hidden=1,value=0), sum_0  @Param(name="sum",type="Int",value=0))
+start_0 := 0 ^ (31 ^ 0)
+(start_1,s_ref_1,s_top_1) := call collatz(start_0,s_ref_0,s_top_0)
+(s_ref_2,s_top_2,sum_1) := call sum(s_ref_1,s_top_1,sum_0)
+0 := start_1 ^ (31 ^ 0)
+end main(s_ref_2  @Param(name="s",size=s_top_2,type="Stack",value=100), s_top_2  @Param(type="Int",hidden=1,value=0), sum_1  @Param(name="sum",type="Int",value=0))
+
+// Code for procedure sum:
+begin sum(s_ref_0, s_top_0, result_0)
+M[20 @InBounds(size=102400,base=0)] += 256 ^ 0 @Allocation(request=256,usage=M[20 @InBounds(size=102400,base=0)])
+copy_ref_0 := 0 ^ (M[20 @InBounds(size=102400,base=0)] - 256)
+copy_top_0 := 0 ^ (0 ^ 0)
+tmp_0 := 0 ^ (0 ^ 0)
+-> Lsum_1(s_ref_0, copy_ref_0, tmp_0, copy_top_0, s_top_0, result_0)
+Lsum_1(s_ref_1, copy_ref_1, tmp_1, copy_top_1, s_top_1, result_1)Lsum_3 <- copy_top_1 == 0
+s_top_2 := s_top_1 - (1 ^ 0)
+Tg_0 := 0 + (s_ref_1 + s_top_2)
+0 := 0 ^ (tmp_1 ^ 0)
+tmp_2 := M[Tg_0 @InBounds(size=256,base=s_ref_1)] := tmp_1
+0 := Tg_0 - (s_ref_1 + s_top_2)
+result_2 := result_1 + (tmp_2 ^ 0)
+Th_0 := 0 + (copy_ref_1 + copy_top_1)
+tmp_3 := M[Th_0 @InBounds(size=256,base=copy_ref_1)] := tmp_2
+0 := 0 ^ (tmp_3 ^ 0)
+0 := Th_0 - (copy_ref_1 + copy_top_1)
+copy_top_2 := copy_top_1 + (1 ^ 0)
+s_top_2 == 0 -> Lsum_4(s_ref_1, copy_ref_1, tmp_3, copy_top_2, s_top_2, result_2)Lsum_2
+Lsum_2(s_ref_2, copy_ref_2, tmp_4, copy_top_3, s_top_3, result_3) <-
+-> Lsum_3(s_ref_2, copy_ref_2, tmp_4, copy_top_3, s_top_3, result_3)
+Lsum_4(s_ref_3, copy_ref_3, tmp_5, copy_top_4, s_top_4, result_4) <-
+-> Lsum_5(s_ref_3, copy_ref_3, tmp_5, copy_top_4, s_top_4, result_4)
+Lsum_5(s_ref_4, copy_ref_4, tmp_6, copy_top_5, s_top_5, result_5)Lsum_7 <- s_top_5 == 0
+copy_top_6 := copy_top_5 - (1 ^ 0)
+Ti_0 := 0 + (copy_ref_4 + copy_top_6)
+0 := 0 ^ (tmp_6 ^ 0)
+tmp_7 := M[Ti_0 @InBounds(size=256,base=copy_ref_4)] := tmp_6
+0 := Ti_0 - (copy_ref_4 + copy_top_6)
+Tj_0 := 0 + (s_ref_4 + s_top_5)
+tmp_8 := M[Tj_0 @InBounds(size=256,base=s_ref_4)] := tmp_7
+0 := 0 ^ (tmp_8 ^ 0)
+0 := Tj_0 - (s_ref_4 + s_top_5)
+s_top_6 := s_top_5 + (1 ^ 0)
+copy_top_6 == 0 -> Lsum_8(s_ref_4, copy_ref_4, tmp_8, copy_top_6, s_top_6, result_5)Lsum_6
+Lsum_6(s_ref_5, copy_ref_5, tmp_9, copy_top_7, s_top_7, result_6) <-
+-> Lsum_7(s_ref_5, copy_ref_5, tmp_9, copy_top_7, s_top_7, result_6)
+Lsum_8(s_ref_6, copy_ref_6, tmp_10, copy_top_8, s_top_8, result_7) <-
+0 := tmp_10 ^ (0 ^ 0)
+0 := copy_top_8 ^ (0 ^ 0)
+0 := copy_ref_6 ^ (M[20 @InBounds(size=102400,base=0)] - 256)
+M[20 @InBounds(size=102400,base=0)] -= 256 ^ 0 @Allocation(request=-256,usage=M[20 @InBounds(size=102400,base=0)])
+end sum(s_ref_6, s_top_8, result_7)

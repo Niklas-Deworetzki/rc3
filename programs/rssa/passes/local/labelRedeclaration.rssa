@@ -1,0 +1,15 @@
+begin main()
+-> label
+
+label <-
+->exit(3)
+
+label <-
+-> exit(42)
+
+exit(res) <-
+end main(res)
+
+/*
+Error: Redeclaration of label 'label'.
+*/

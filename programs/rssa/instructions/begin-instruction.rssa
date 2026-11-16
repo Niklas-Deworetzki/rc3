@@ -1,0 +1,9 @@
+begin main(3)
+end main()
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+
+    (No output will be generated)
+*/

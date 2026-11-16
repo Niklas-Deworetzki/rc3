@@ -1,0 +1,13 @@
+@Heap(size=654321) // default size = 102400
+
+begin main()
+M[654320] += 42 + 0
+answer := 0 + (M[654320] ^ 0) // should fail here
+end main(answer)
+
+/*
+Output with option --print-main should look like this:
+
+Variables at end of 'Forward.main' subroutine:
+answer = 42
+*/

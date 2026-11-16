@@ -1,0 +1,10 @@
+begin main()
+0 := x + (1 - 5)
+end main()
+
+/*
+Error: Usage of unknown or destroyed variable 'x'.
+programs/rssa/vm/passes/variables/unknownVariable.rssa: Line 2, column 1
+  2 | 0 := x + (1 - 5)
+    | ^
+*/

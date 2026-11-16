@@ -1,0 +1,11 @@
+#! /bin/sh
+
+VERSION=$( cd compiler ; mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout )
+test_jar=./compiler/target/rp-testsuite-$VERSION.jar
+
+if [ ! -f $test_jar ]; then
+  echo "Executable JAR is not present. Building it.."
+  ( cd compiler ; mvn --quiet package -P rp-testsuite )
+fi
+
+java -jar $test_jar $@

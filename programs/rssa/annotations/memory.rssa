@@ -1,0 +1,12 @@
+@Memory(address=12, value=42)
+
+begin main()
+answer := 0 + (0 ^ M[12])
+end main(answer)
+
+/*
+Output with option --print-main should look like this:
+
+Variables at end of 'Forward.main' subroutine:
+answer = 42
+*/

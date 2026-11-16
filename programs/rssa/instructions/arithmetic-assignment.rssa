@@ -1,0 +1,11 @@
+begin main()
+tmp := 1 + (4 - 2)
+res := tmp + (1 ^ 0)
+end main(res)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    res = 4
+
+*/

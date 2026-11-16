@@ -1,0 +1,16 @@
+begin main()
+(x) := call test()
+end main(x)
+
+begin test()
+end test(3)
+
+begin test()
+end test(42)
+
+/*
+Error: Redeclaration of subroutine 'test'.
+programs/rssa/vm/passes/local/subroutineRedeclaration.rssa: Line 8, column 1
+  8 | begin test()
+    | ^
+*/

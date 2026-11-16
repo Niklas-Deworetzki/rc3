@@ -1,0 +1,7 @@
+
+begin p()
+end p()
+
+/*
+Error: The program does not specify an entry point.
+*/

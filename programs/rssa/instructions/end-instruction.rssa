@@ -1,0 +1,9 @@
+begin main ()
+end main (5)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    5 = 5
+    
+*/

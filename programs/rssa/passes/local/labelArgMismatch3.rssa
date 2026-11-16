@@ -1,0 +1,9 @@
+begin main()
+-> l ()
+
+l (1) <-
+end main()
+
+/*
+Error: The number of input and output arguments for basic block 'l' mismatch.
+*/

@@ -1,0 +1,13 @@
+
+begin main(n @Param(value=10))
+        size := 0
+    -> entry(n, size)
+
+    loop(n0, size0)entry <- (size0 > 0)
+        M[size0] ^= 'A'
+        size1 := size0 + 1
+    (n0 != size1) -> loop(n0, size1)exit
+
+    exit(n1, size2) <-
+    0 := n1 ^ size2
+end main(0 @Param(name = Message, type = String, size = size2), size2 @Param(name = "Generated Characters"))

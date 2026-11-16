@@ -1,0 +1,439 @@
+package rc3.rssa.parse;
+
+import java_cup.runtime.*;
+import java.util.*;
+
+import rc3.rssa.instances.*;
+import rc3.rssa.parse.symbol.*;
+import rc3.lib.messages.ErrorMessage;
+import rc3.lib.messages.WarningMessage;
+import rc3.januscompiler.table.Identifier;
+import rc3.rssa.annotations.*;
+import rc3.januscompiler.syntax.AssignStatement.ModificationOperator;
+import rc3.januscompiler.Direction;
+import rc3.lib.parsing.Position;
+
+parser code {:
+
+/**
+ * This method is called by the parser as soon as a syntax error is detected (but before error recovery is attempted).
+ *
+ * <p>
+ * The method is overridden in this implementation, to bypass the default error reporting system. This system happily
+ * prints messages to stdout from many different places. Since there is error reporting implemented on a higher level
+ * using the {@link ErrorMessage} instances, both systems would interfere with each other.
+ * </p>
+ * <p>
+ * This implementation simply throws an instance {@link ErrorMessage.SyntaxError} with adequate parameters to report
+ * a detected syntax error. This however <b>prevents all forms of error recovery</b>. No error recovery is implemented
+ * in this specification, but should it ever be added, this implementation has to change.
+ * </p>
+ */
+@Override
+public void syntax_error(Symbol currentToken) throws ErrorMessage.SyntaxError {
+    Set<String> expectedSymbolNames = new HashSet<>();
+    for (var tokenId : this.expected_token_ids()) {
+        expectedSymbolNames.add(readableSymbolName(tokenId));
+    }
+
+    // Signal that parsing is about to be interrupted.
+    this.done_parsing();
+
+    throw new ErrorMessage.SyntaxError(position(currentToken.left, currentToken.right), expectedSymbolNames);
+}
+
+/**
+ * Translates the symbol id to a more meaningful name. Instead of using the name of the symbol's constant, a context
+ * aware name like "start of statement" is chosen.
+ */
+public String readableSymbolName(int id) {
+    switch (id) {
+        case Sym.EOF:
+            return "end of file";
+
+        case Sym.ADD:
+        case Sym.AND:
+        case Sym.DIV:
+        case Sym.EQU:
+        case Sym.GRE:
+        case Sym.GRT:
+        case Sym.LSE:
+        case Sym.LST:
+        case Sym.MOD:
+        case Sym.MUL:
+        case Sym.NEQ:
+        case Sym.OR:
+        case Sym.SUB:
+        case Sym.XOR:
+        case Sym.ASGN:
+        case Sym.LSHIFT:
+        case Sym.RSHIFT:
+            return "operator";
+
+        case Sym.INTLIT:
+        case Sym.STRING_LITERAL:
+            return "literal";
+
+        case Sym.IDENT:
+            return "identifier";
+
+        case Sym.CALL:
+        case Sym.UNCALL:
+            return "start of statement";
+
+        case Sym.BEGIN:
+            return "start of subroutine declaration";
+        case Sym.END:
+            return "end of subroutine declaration";
+
+        case Sym.ENTRY:
+            return "start of basic block declaration";
+        case Sym.EXIT:
+            return "end of basic block declaration";
+
+        case Sym.MEM:
+            return "memory access";
+
+        case Sym.COMMA:
+            return "','";
+        case Sym.LBRA:
+            return "')'";
+        case Sym.LPAR:
+            return "'('";
+        case Sym.RBRA:
+            return "']'";
+        case Sym.RPAR:
+            return "'['";
+        case Sym.AT:
+            return "@";
+
+        default:
+            return Sym.terminalNames[id];
+    }
+}
+
+/**
+ * Creates a new {@link Position} object from given left and right values.
+ */
+public Position position(int left, int right) {
+    return new Position(
+            ((rc3.rssa.parse.Scanner) getScanner()).source,
+            left, right);
+}
+
+public <C extends ControlInstruction> C withParameters(C element, List<? extends Atom> parameterList) {
+    element.addParameters(parameterList);
+    return element;
+}
+
+public <T> T wrongArrow(int left, int right, String construct, String correctArrow) throws ErrorMessage.WrongArrow {
+    throw new ErrorMessage.WrongArrow(position(left, right), construct, correctArrow);
+}
+
+public <T> List<T> cons(T head, List<T> tail) {
+    tail.add(0, head);
+    return tail;
+}
+
+public <T> List<T> singleton(T element) {
+    return cons(element, nil());
+}
+
+public <T> List<T> nil() {
+    return new LinkedList<>();
+}
+
+public Annotation createAnnotation(String identifier, Map<String, Object> values,
+                                    int left, int right) throws ErrorMessage {
+    try {
+        return new Annotation(identifier, values);
+    } catch (IllegalStateException malformedAnnotation) {
+        throw new ErrorMessage.MalformedAnnotation(position(left, right), malformedAnnotation.getMessage());
+    }
+}
+:}
+
+terminal LPAR, RPAR;
+terminal LBRA, RBRA;
+terminal COMMA;
+
+terminal ENTRY, EXIT;
+
+terminal ADD, SUB, MUL, DIV, MOD;
+terminal AND, OR, XOR, LSHIFT, RSHIFT;
+terminal LST, LSE, GRT, GRE, EQU, NEQ;
+terminal ASGN, SWAP;
+
+terminal MEM;
+terminal BEGIN, END, CALL, UNCALL;
+
+terminal AT;
+
+terminal Identifier IDENT;
+terminal Integer INTLIT;
+terminal String STRING_LITERAL;
+
+nonterminal Epsilon;
+
+nonterminal ParsedProgram Program;
+
+nonterminal List<Instruction> InstructionList;
+nonterminal List<Atom> AnnotatedParameterList, AnnotatedParameterListTail;
+nonterminal List<Annotation> AnnotationList;
+nonterminal List<Map.Entry<String,Object>> AnnotationFieldList, AnnotationFieldListTail;
+nonterminal Map.Entry<String,Object> AnnotationField;
+nonterminal Object AnnotationValue;
+
+nonterminal Instruction AnnotatedInstruction, Instruction, ArithmeticAssignment, BeginInstruction, CallInstruction, ConditionalEntry,
+            ConditionalExit, EndInstruction, MemoryAssignment, MemoryInterchangeInstruction, MemorySwapInstruction,
+            SwapInstruction, UnconditionalEntry, UnconditionalExit;
+
+nonterminal RValue RValue;
+nonterminal MemoryAccess MemoryAccess;
+nonterminal Atom Atom;
+
+nonterminal Direction CallKeyword;
+
+nonterminal ModificationOperator ModificationOperator;
+nonterminal BinaryOperand.BinaryOperator BinaryOperator, ConditionalOperator;
+
+nonterminal BinaryOperand Condition, Binary;
+
+nonterminal Annotation Annotation;
+
+
+start with Program;
+
+Epsilon ::=  ; // Empty symbol
+
+
+Program ::= AnnotationList:annotations InstructionList:instructions {: RESULT = new ParsedProgram(instructions, annotations); :}
+          ;
+
+InstructionList ::= AnnotatedInstruction:head InstructionList:tail {: RESULT = cons(head, tail); :}
+                  | Epsilon {: RESULT = nil(); :}
+                  ;
+
+AnnotatedInstruction ::= Instruction:instr AnnotationList:annotations
+                         {: RESULT = instr;
+                            instr.annotate(annotations);
+                            instr.annotate(new Annotation("Source", Map.of("position", position(instrleft, instrright)))); :}
+                       ;
+
+AnnotationList ::= Annotation:head AnnotationList:tail {: RESULT = cons(head, tail); :}
+                 | Epsilon {: RESULT = nil(); :}
+                 ;
+
+Annotation ::= AT IDENT:name LPAR AnnotationFieldList:fields RPAR
+               {: RESULT = createAnnotation(name.name, Map.ofEntries(fields.toArray(Map.Entry[]::new)), nameleft, nameright); :}
+             | AT IDENT:name LPAR AnnotationValue:value RPAR
+               {: RESULT = createAnnotation(name.name, Map.of("value", value), nameleft, nameright); :}
+             ;
+
+
+AnnotationFieldList ::= AnnotationField:head AnnotationFieldListTail:tail
+                        {: RESULT = cons(head, tail); :}
+                      | Epsilon
+                        {: RESULT = nil(); :}
+                   ;
+
+AnnotationFieldListTail ::= COMMA AnnotationField:head AnnotationFieldListTail:tail
+                            {: RESULT = cons(head, tail); :}
+                          | Epsilon
+                            {: RESULT = nil(); :}
+                          ;
+
+AnnotationField ::= IDENT:key EQU AnnotationValue:value {: RESULT =  Map.entry(key.name, value); :}
+                  ;
+
+AnnotationValue ::= STRING_LITERAL:value {: RESULT = value; :}
+                  | RValue:value         {: RESULT = value; :}
+                  ;
+
+Instruction ::= ArithmeticAssignment:instr {: RESULT = instr; :}
+              | BeginInstruction:instr {: RESULT = instr; :}
+              | CallInstruction:instr {: RESULT = instr; :}
+              | ConditionalEntry:instr {: RESULT = instr; :}
+              | ConditionalExit:instr {: RESULT = instr; :}
+              | EndInstruction:instr {: RESULT = instr; :}
+              | MemoryAssignment:instr {: RESULT = instr; :}
+              | MemoryInterchangeInstruction:instr {: RESULT = instr; :}
+              | MemorySwapInstruction:instr {: RESULT = instr; :}
+              | SwapInstruction:instr {: RESULT = instr; :}
+              | UnconditionalEntry:instr {: RESULT = instr; :}
+              | UnconditionalExit:instr {: RESULT = instr; :}
+              ;
+
+ArithmeticAssignment ::= Atom:target ASGN Atom:source ModificationOperator:op LPAR Binary:binary RPAR
+                         {: RESULT = new ArithmeticAssignment(target, source, op, binary); :}
+                       // Special case for negative literal without space   a := x + 3 -2
+                       | Atom:target ASGN Atom:source ModificationOperator:op LPAR RValue:left INTLIT:right RPAR
+                         {: if (right < 0) {
+                                RESULT = new ArithmeticAssignment(target, source, op,
+                                                left, BinaryOperand.BinaryOperator.SUB, new Constant(-right));
+                            } else {
+                                throw new ErrorMessage.SyntaxError(position(rightleft, rightright),
+                                                List.of("operator"));
+                            }
+                         :}
+                       // Syntax extension, allows omission of parentheses. Warns if precedence becomes unclear.
+                       | Atom:target ASGN Atom:source ModificationOperator:op Binary:binary
+                         {: RESULT = new ArithmeticAssignment(target, source, op, binary);
+                            switch (binary.operator) {
+                                case ADD, SUB, XOR, MUL, DIV, MOD -> { /* Fine. */ }
+                                default -> { new WarningMessage.UnclearPrecedence(position(binaryleft, binaryright)).report(); }
+                            }
+                         :}
+                       // Syntax extension of simple assignment.
+                       | Atom:target ASGN Atom:source
+                         {: RESULT = ArithmeticAssignment.assignAndDestroy(target, source); :}
+                       ;
+
+BeginInstruction ::= BEGIN IDENT:label LPAR AnnotatedParameterList:list RPAR
+                     {: RESULT = withParameters(new BeginInstruction(label.name), list); :}
+                   ;
+
+CallKeyword ::= CALL    {: RESULT = Direction.FORWARD; :}
+              | UNCALL  {: RESULT = Direction.BACKWARD; :}
+              ;
+
+CallInstruction ::= LPAR AnnotatedParameterList:outList RPAR ASGN CallKeyword:direction IDENT:procedure LPAR AnnotatedParameterList:inList RPAR
+                    {: RESULT = new CallInstruction(outList, direction, procedure.name, inList); :}
+                  ;
+
+ConditionalEntry ::= IDENT:trueLabel LPAR AnnotatedParameterList:list RPAR IDENT:falseLabel ENTRY Condition:condition
+                     {: if (trueLabel.equals(falseLabel)) {
+                            throw new ErrorMessage.DuplicateLabel(position(trueLabelleft, trueLabelright), trueLabel.name);
+                        }
+                        RESULT = withParameters(new ConditionalEntry(trueLabel.name, falseLabel.name, condition), list); :}
+                   // Special grammar rule detecting wrong arrow in entry point.
+                   | IDENT LPAR AnnotatedParameterList RPAR IDENT EXIT:anchor Condition
+                     {: RESULT = wrongArrow(anchorleft, anchorright, "conditional entry", "<-"); :}
+                   ;
+
+ConditionalExit ::= Condition:condition EXIT IDENT:trueLabel LPAR AnnotatedParameterList:list RPAR IDENT:falseLabel
+                    {: if (trueLabel.equals(falseLabel)) {
+                           throw new ErrorMessage.DuplicateLabel(position(trueLabelleft, trueLabelright), trueLabel.name);
+                       }
+                       RESULT = withParameters(new ConditionalExit(trueLabel.name, falseLabel.name, condition), list); :}
+                  // Special grammar rule detecting wrong arrow in exit point.
+                  | Condition ENTRY:anchor IDENT LPAR AnnotatedParameterList RPAR IDENT
+                     {: RESULT = wrongArrow(anchorleft, anchorright, "conditional exit", "->"); :}
+                  ;
+
+EndInstruction ::= END IDENT:label LPAR AnnotatedParameterList:list RPAR
+                   {: RESULT = withParameters(new EndInstruction(label.name), list); :}
+                 ;
+
+MemoryAssignment ::= MemoryAccess:target ModificationOperator:op EQU Binary:binary
+                     {: RESULT = new MemoryAssignment(target, op, binary); :}
+                   | MemoryAccess:target ModificationOperator:op EQU LPAR Binary:binary RPAR
+                     {: RESULT = new MemoryAssignment(target, op, binary); :}
+                   // Special case for negative literal without space   M[a] 3 -2
+                   | MemoryAccess:target ModificationOperator:op EQU LPAR Atom:left INTLIT:right RPAR
+                     {: if (right < 0) {
+                            RESULT = new MemoryAssignment(target, op,
+                                        left, BinaryOperand.BinaryOperator.SUB, new Constant(-right));
+                        } else {
+                            throw new ErrorMessage.SyntaxError(position(rightleft, rightright),
+                                        List.of("operator"));
+                        }
+                     :}
+                   ;
+
+MemoryInterchangeInstruction ::= Atom:left ASGN MemoryAccess:ma ASGN Atom:right
+                                 {: RESULT = new MemoryInterchangeInstruction(left, ma, right); :}
+                               ;
+
+MemorySwapInstruction ::= MemoryAccess:left SWAP MemoryAccess:right
+                          {: RESULT = new MemorySwapInstruction(left, right); :}
+                        ;
+
+SwapInstruction ::= Atom:targetLeft COMMA Atom:targetRight ASGN Atom:sourceLeft COMMA Atom:sourceRight
+                    {: RESULT = new SwapInstruction(targetLeft, targetRight, sourceLeft, sourceRight); :}
+                  ;
+
+UnconditionalEntry ::= IDENT:label LPAR AnnotatedParameterList:list RPAR ENTRY
+                       {: RESULT = withParameters(new UnconditionalEntry(label.name), list); :}
+                     // Special grammar rule detecting wrong arrow in entry point.
+                     | IDENT LPAR AnnotatedParameterList RPAR EXIT:anchor
+                       {: RESULT = wrongArrow(anchorleft, anchorright, "unconditional entry", "<-"); :}
+                     ;
+
+UnconditionalExit ::= EXIT IDENT:label LPAR AnnotatedParameterList:list RPAR
+                      {: RESULT = withParameters(new UnconditionalExit(label.name), list); :}
+                    // Special grammar rule detecting wrong arrow in exit point.
+                    | ENTRY:anchor IDENT LPAR AnnotatedParameterList RPAR
+                      {: RESULT = wrongArrow(anchorleft, anchorright, "unconditional exit", "->"); :}
+                    ;
+
+
+AnnotatedParameterList ::= Atom:param AnnotationList:annos AnnotatedParameterListTail:tail
+                            {: param.annotate(annos); RESULT = cons(param, tail); :}
+                          | Epsilon
+                            {: RESULT = nil(); :}
+                          ;
+
+AnnotatedParameterListTail ::= COMMA Atom:param AnnotationList:annos AnnotatedParameterListTail:tail
+                                {: param.annotate(annos); RESULT = cons(param, tail); :}
+                             | Epsilon
+                                {: RESULT = nil(); :}
+                             ;
+
+
+RValue ::= MemoryAccess:ma  {: RESULT = ma; :}
+         | Atom:atom        {: RESULT = atom; :}
+         ;
+
+
+MemoryAccess ::= MEM LBRA Atom:index RBRA
+                 {: RESULT = new MemoryAccess(index); :}
+               | MEM LBRA Atom:index Annotation:anno RBRA
+                 {: MemoryAccess memoryAccess = new MemoryAccess(index);
+                    memoryAccess.annotate(anno);
+                    RESULT = memoryAccess; :}
+               ;
+
+Atom ::= INTLIT:lit     {: RESULT =  new Constant(lit); :}
+       | IDENT:ident    {: RESULT = new Variable(ident.name); :}
+       ;
+
+ModificationOperator ::= ADD {: RESULT = ModificationOperator.ADD; :}
+                       | SUB {: RESULT = ModificationOperator.SUB; :}
+                       | XOR {: RESULT = ModificationOperator.XOR; :}
+                       ;
+
+BinaryOperator ::= ADD {: RESULT = BinaryOperand.BinaryOperator.ADD; :}
+                 | SUB {: RESULT = BinaryOperand.BinaryOperator.SUB; :}
+                 | XOR {: RESULT = BinaryOperand.BinaryOperator.XOR; :}
+                 | OR {: RESULT = BinaryOperand.BinaryOperator.OR; :}
+                 | RSHIFT {: RESULT = BinaryOperand.BinaryOperator.SAR; :} // SAR
+                 | LSHIFT {: RESULT = BinaryOperand.BinaryOperator.SAL; :} // SAL
+                 // Added to allow translation from Janus. MUL, DIV and MOD are not present in original RSSA.
+                 | MUL {: RESULT = BinaryOperand.BinaryOperator.MUL; :}
+                 | DIV {: RESULT = BinaryOperand.BinaryOperator.DIV; :}
+                 | MOD {: RESULT = BinaryOperand.BinaryOperator.MOD; :}
+                 | ConditionalOperator:op {: RESULT = op; :}
+                 ;
+
+ConditionalOperator ::= EQU EQU {: RESULT = BinaryOperand.BinaryOperator.EQU; :}
+                      | LST {: RESULT = BinaryOperand.BinaryOperator.LST; :}
+                      | GRT {: RESULT = BinaryOperand.BinaryOperator.GRT; :}
+                      | NEQ {: RESULT = BinaryOperand.BinaryOperator.NEQ; :}
+                      | LSE {: RESULT = BinaryOperand.BinaryOperator.LSE; :}
+                      | GRE {: RESULT = BinaryOperand.BinaryOperator.GRE; :}
+                      | AND {: RESULT = BinaryOperand.BinaryOperator.AND; :}
+                      ;
+
+Condition ::= RValue:left ConditionalOperator:op RValue:right
+                {: RESULT = new BinaryOperand(left, op, right); :}
+            | LPAR RValue:left ConditionalOperator:op RValue:right RPAR
+                {: RESULT = new BinaryOperand(left, op, right); :}
+            ;
+
+Binary ::= RValue:left BinaryOperator:op RValue:right
+            {:  RESULT = new BinaryOperand(left, op, right);  :}
+         | RValue:value
+            {:  RESULT = BinaryOperand.of(value);  :}
+         ;
+

@@ -1,0 +1,10 @@
+@Entry(value="foo")
+@Entry(value="p")
+
+
+begin p()
+end p()
+
+/*
+Error: The program does specify more than one entry point.
+*/

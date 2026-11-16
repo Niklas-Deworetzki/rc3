@@ -1,0 +1,45 @@
+begin main(a @Param(type="Array", value=0, size= 12),
+           b @Param(type="Array", value=12, size=4),
+           s_ref_0 @Param(type="Stack", value=16, size=s_top_0, name="s"),
+           s_top_0 @Param(type="Int", value=0, hidden=1))
+// array operations
+Ta_0 := 0 ^ (a + 0)
+M[Ta_0 @InBounds(base = a,size = 12)] += 1 ^ 0
+0 := Ta_0 ^ (a + 0)
+Tb_0 := 0 ^ (b + 1)
+M[Tb_0 @InBounds(base = b,size = 4)] += 2 ^ 0
+0 := Tb_0 ^ (b + 1)
+Tc_0 := 0 ^ (a + 2)
+Td_0 := 0 ^ (a + 0)
+M[Tc_0 @InBounds(base = a,size = 12)] <-> M[Td_0 @InBounds(base = a,size = 12)]
+0 := Td_0 ^ (a + 0)
+0 := Tc_0 ^ (a + 2)
+// stack operations:
+x_0 := 0 ^ (1 ^ 0)
+y_0 := 0 ^ (2 ^ 0)
+Ta_0 := 0 + (s_ref_0 + s_top_0)
+x_1 := M[Ta_0 @InBounds(size = 256,base = s_ref_0)] := x_0
+0 := 0 ^ (x_1 ^ 0)
+0 := Ta_0 - (s_ref_0 + s_top_0)
+s_top_1 := s_top_0 + (1 ^ 0)
+Tb_0 := 0 + (s_ref_0 + s_top_1)
+y_1 := M[Tb_0 @InBounds(size = 256,base = s_ref_0)] := y_0
+0 := 0 ^ (y_1 ^ 0)
+0 := Tb_0 - (s_ref_0 + s_top_1)
+s_top_2 := s_top_1 + (1 ^ 0)
+0 := y_1 ^ (0 ^ 0)
+0 := x_1 ^ (0 ^ 0)
+end main(a @Param(type="Array", value=0, size= 12),
+         b @Param(type="Array", value=12, size=4),
+         s_ref_0 @Param(type="Stack", value=16, size=s_top_2, name="s"),
+         s_top_2 @Param(type="Int", value=0, hidden=1)) // value at end instruction for a stack size reference is nerver used
+
+
+/* Output with option --print-main should look like this: (forward)
+
+    Variables at end of 'main' procedure:
+    a = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    b = [0, 2, 0, 0]
+    s = <2, 1]
+
+*/

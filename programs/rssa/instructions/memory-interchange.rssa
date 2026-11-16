@@ -1,0 +1,15 @@
+begin main()
+y := 42 + (0 + 0)
+M[5] += 3 + 0
+x := M[5] := y
+memoryAt5 := 0 + (M[5] + 0)
+end main(x, memoryAt5)
+
+/*
+Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    x = 3
+    memoryAt5 = 42
+    
+*/

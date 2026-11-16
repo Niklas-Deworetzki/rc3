@@ -1,0 +1,14 @@
+begin main()
+-> l()
+l() <-
+x := 1 + (1+1)
+-> exit()
+exit() <-
+end main()
+
+/*
+Error: At end of subroutine 'main' not all variables were destroyed.
+programs/rssa/vm/passes/variables/undestroyedVariables.rssa: Line 7, column 1
+  7 | end main()
+    | ^
+*/

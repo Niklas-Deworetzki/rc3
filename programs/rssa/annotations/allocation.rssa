@@ -1,0 +1,12 @@
+begin main()
+M[20 @InBounds(size = 102400,base = 0)] += 256 ^ 0 @Allocation(request = 256,usage = M[20 @InBounds(size = 102400,base = 0)])
+M[20 @InBounds(size = 102400,base = 0)] -= 246 ^ 0 @Allocation(request = -246,usage = M[20 @InBounds(size = 102400,base = 0)])
+res := 0 ^ (M[20 @InBounds(size = 102400,base = 0)] + 0)
+end main(res)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    res = 10
+
+*/
