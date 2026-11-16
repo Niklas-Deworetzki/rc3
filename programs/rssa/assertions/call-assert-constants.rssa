@@ -1,0 +1,15 @@
+begin main ()
+(2) := call test()
+(5) := call test() // should fail here
+end main()
+
+begin test()
+end test(2)
+
+/*
+The call statment (line 3) restores value 2 from subroutine 'test' and therefore must assert that 5 == 2 which is false.
+Should fail with:
+
+Failed assertion: Value 2 is not equals target 5.
+	at Forward.main(../tests/rssa/vm/assertions/call-assert-constants.rssa:3)
+*/

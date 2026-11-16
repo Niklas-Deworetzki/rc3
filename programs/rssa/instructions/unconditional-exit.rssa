@@ -1,0 +1,15 @@
+begin main()
+-> someEntry 
+-> otherEntry
+otherEntry <-
+res := 5 + (0 + 0) // does not get executed, so no error occurs later!
+someEntry <-
+res := 4 + (0 + 0)
+end main(res)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    res = 4
+
+*/

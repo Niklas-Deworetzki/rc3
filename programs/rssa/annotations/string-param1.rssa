@@ -1,0 +1,15 @@
+
+begin main()
+    M[ 0] += 'H' ^ 0
+    M[ 1] += 'e' ^ 0
+    M[ 2] += 'l' ^ 0
+    M[ 3] += 'l' ^ 0
+    M[ 4] += 'o' ^ 0
+    M[ 5] += ' ' ^ 0
+    M[ 6] += 'W' ^ 0
+    M[ 7] += 'o' ^ 0
+    M[ 8] += 'r' ^ 0
+    M[ 9] += 'l' ^ 0
+    M[10] += 'd' ^ 0
+    M[11] += '!' ^ 0
+end main(0 @Param(name = Message, type = String, size = 12))

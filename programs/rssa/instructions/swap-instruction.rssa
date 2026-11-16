@@ -1,0 +1,14 @@
+begin main()
+z := 5 + (0 + 0)
+w := 3 + (0 + 0)
+x, y := z, w
+end main(x, y)
+
+/*
+Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    x = 5
+    y = 3
+
+*/

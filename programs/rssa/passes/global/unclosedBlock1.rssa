@@ -1,0 +1,15 @@
+begin main()
+-> l1 ()
+
+l1() <-
+// unclosed block
+
+exit() <-
+end main()
+
+/*
+Error: Exit instruction for basic block with label(s) [l1] is missing.
+programs/rssa/vm/passes/global/unclosedBlock.rssa: Line 4, column 1
+  4 | l1() <-
+    | ^
+*/

@@ -1,0 +1,16 @@
+@Entry(value="realMain")
+
+begin main()
+x := 1 + (0 ^ 0)
+end main(x)
+
+begin realMain()
+x := 3 + (0 ^ 0)
+end realMain(x)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'realMain' procedure:
+    x = 3
+
+*/

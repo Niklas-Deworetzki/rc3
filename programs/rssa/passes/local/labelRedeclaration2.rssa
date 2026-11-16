@@ -1,0 +1,18 @@
+begin main()
+-> label
+
+label <-
+->exit(3)
+
+exit(res) <-
+end main(res)
+
+begin p()
+-> exit()
+
+exit() <-
+end p()
+
+/*
+Error: Redeclaration of label 'exit'.
+*/

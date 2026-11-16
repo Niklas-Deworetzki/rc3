@@ -1,0 +1,485 @@
+package rc3.januscompiler.parse;
+
+import java_cup.runtime.*;
+import java.util.*;
+
+import rc3.januscompiler.Direction;
+import rc3.januscompiler.syntax.*;
+import rc3.januscompiler.parse.symbol.*;
+import rc3.januscompiler.types.*;
+import rc3.januscompiler.table.Identifier;
+import rc3.januscompiler.table.Builtins;
+import rc3.lib.messages.ErrorMessage;
+import rc3.lib.parsing.Position;
+
+parser code {:
+
+/**
+ * This method is called by the parser as soon as a syntax error is detected (but before error recovery is attempted).
+ *
+ * <p>
+ * The method is overridden in this implementation, to bypass the default error reporting system. This system happily
+ * prints messages to stdout from many different places. Since there is error reporting implemented on a higher level
+ * using the {@link ErrorMessage} instances, both systems would interfere with each other.
+ * </p>
+ * <p>
+ * This implementation simply throws an instance {@link ErrorMessage.SyntaxError} with adequate parameters to report
+ * a detected syntax error. This however <b>prevents all forms of error recovery</b>. No error recovery is implemented
+ * in this specification, but should it ever be added, this implementation has to change.
+ * </p>
+ */
+@Override
+public void syntax_error(Symbol currentToken) throws ErrorMessage.SyntaxError {
+    Set<String> expectedSymbolNames = new HashSet<>();
+    for (var tokenId : this.expected_token_ids()) {
+        expectedSymbolNames.add(readableSymbolName(tokenId));
+    }
+
+    // Signal that parsing is about to be interrupted.
+    this.done_parsing();
+
+    throw new ErrorMessage.SyntaxError(position(currentToken.left, currentToken.right), expectedSymbolNames);
+}
+
+/**
+ * Translates the symbol id to a more meaningful name. Instead of using the name of the symbol's constant, a context
+ * aware name like "start of statement" is chosen.
+ */
+public String readableSymbolName(int id) {
+    switch (id) {
+        case Sym.EOF:
+            return "end of file";
+
+        case Sym.ADD:
+        case Sym.AND:
+        case Sym.CONJ:
+        case Sym.DISJ:
+        case Sym.DIV:
+        case Sym.EQU:
+        case Sym.GRE:
+        case Sym.GRT:
+        case Sym.LSE:
+        case Sym.LST:
+        case Sym.MOD:
+        case Sym.MUL:
+        case Sym.NEQ:
+        case Sym.OR:
+        case Sym.SUB:
+        case Sym.XOR:
+            return "operator";
+
+        case Sym.INTLIT:
+        case Sym.NIL:
+            return "literal";
+
+        case Sym.IDENT:
+        case Sym.MAIN:
+            return "identifier";
+
+        case Sym.SWAP:
+            return "swap operator";
+
+        case Sym.EMPTY:
+        case Sym.TOP:
+            return "start of expression";
+
+        case Sym.CALL:
+        case Sym.UNCALL:
+        case Sym.READ:
+        case Sym.WRITE:
+        case Sym.READC:
+        case Sym.WRITEC:
+        case Sym.LOCAL:
+        case Sym.DELOCAL:
+        case Sym.FROM:
+        case Sym.SKIP:
+        case Sym.IF:
+        case Sym.POP:
+        case Sym.PUSH:
+            return "start of statement";
+
+        case Sym.PROCEDURE:
+            return "start of procedure declaration";
+
+        case Sym.INT:
+        case Sym.STACK:
+            return "type name";
+
+        case Sym.DO:
+            return "do";
+        case Sym.ELSE:
+            return "else";
+        case Sym.FI:
+            return "fi";
+        case Sym.LOOP:
+            return "loop";
+        case Sym.THEN:
+            return "then";
+        case Sym.UNTIL:
+            return "until";
+
+        case Sym.COMMA:
+            return "','";
+        case Sym.LBRA:
+            return "')'";
+        case Sym.LPAR:
+            return "'('";
+        case Sym.RBRA:
+            return "']'";
+        case Sym.RPAR:
+            return "'['";
+
+        default:
+            return Sym.terminalNames[id];
+    }
+}
+
+/**
+ * Creates a new {@link Position} object from given left and right values.
+ */
+public Position position(int left, int right) {
+    return new Position(
+            ((rc3.januscompiler.parse.Scanner) getScanner()).source,
+            left, right);
+}
+
+public <T> List<T> cons(T head, List<T> tail) {
+    tail.add(0, head);
+    return tail;
+}
+
+public <T> List<T> singleton(T element) {
+    return cons(element, nil());
+}
+
+public <T> List<T> nil() {
+    return new LinkedList<>();
+}
+
+/**
+ * Throws an ErrorMessage to interrupt parsing. This is here to create compilable code for error rules.
+ * Directly throwing an exception yields unreachable code in the generated parser.
+ */
+private <T, E extends ErrorMessage> T reportError(E errorMessage) throws E {
+    throw errorMessage;
+}
+
+:}
+
+terminal LPAR, RPAR;
+terminal LBRA, RBRA;
+terminal COMMA;
+
+terminal ADD, SUB, MUL, DIV, MOD;
+terminal AND, OR, XOR;
+terminal CONJ, DISJ;
+terminal LST, LSE, GRT, GRE, EQU, NEQ;
+terminal SWAP;
+
+terminal INT, STACK;
+terminal PROCEDURE, CALL, UNCALL;
+terminal IF, THEN, ELSE, FI;
+terminal FROM, DO, LOOP, UNTIL;
+terminal PUSH, POP;
+terminal LOCAL, DELOCAL;
+terminal SKIP;
+terminal EMPTY, TOP, NIL;
+terminal READ, WRITE;
+terminal READC, WRITEC;
+
+terminal MAIN;
+
+terminal Identifier IDENT;
+terminal Integer INTLIT;
+
+nonterminal Identifier VariableIdentifier;
+nonterminal Program Program;
+nonterminal Epsilon;
+
+nonterminal List<ProcedureDeclaration> ProcedureDeclarationList;
+nonterminal ProcedureDeclaration ProcedureDeclaration, MainProcedureDeclaration;
+
+nonterminal List<VariableDeclaration> ParameterList, ParameterListTail, VariableList;
+nonterminal VariableDeclaration VariableDeclaration;
+
+nonterminal Variable Variable;
+
+nonterminal List<Statement> NonEmptyStatementList, StatementListTail;
+nonterminal Statement Statement, AssignStatement, CallStatement, IfStatement, LocalBlockStatement, LoopStatement;
+nonterminal Statement SkipStatement, SwapStatement, BuiltinStatement;
+
+nonterminal Builtins.Procedure BuiltinProcedure;
+
+nonterminal List<Variable> ArgumentList, ArgumentListTail;
+
+nonterminal Expression Expression, DisjExpression, ConjExpression, OrExpression, XorExpression, AndExpression;
+nonterminal Expression RelationalExpression, AdditiveExpression, MultiplicativeExpression, AtomicExpression;
+
+nonterminal AssignStatement.ModificationOperator ModificationOperator;
+nonterminal BinaryExpression.BinaryOperator RelationalOperator, AdditiveOperator, MultiplicativeOperator;
+
+nonterminal Builtins.Expression BuiltinExpression;
+
+start with Program;
+
+VariableIdentifier ::= IDENT:name {: RESULT = name; :}
+                     | MAIN:name  {: RESULT = new Identifier("main", position(nameleft, nameright)); :}
+                     ;
+
+Epsilon ::=  ; // Empty symbol
+
+Program ::= ProcedureDeclarationList:list
+             {: RESULT = new Program(position(1, 1), list); :}
+          ;
+
+
+ProcedureDeclarationList ::= ProcedureDeclaration:dec ProcedureDeclarationList:tail
+                              {: RESULT = cons(dec, tail); :}
+                           | MainProcedureDeclaration:dec ProcedureDeclarationList:tail
+                              {: RESULT = cons(dec, tail); :}
+                           | Epsilon
+                              {: RESULT = nil(); :}
+                           ;
+
+ProcedureDeclaration ::= PROCEDURE:anchor IDENT:name LPAR ParameterList:params RPAR NonEmptyStatementList:body
+                          {: RESULT = new ProcedureDeclaration(position(anchorleft, anchorright), name, params, body); :}
+                       ;
+
+MainProcedureDeclaration ::= PROCEDURE:anchor MAIN:name LPAR RPAR VariableList:vars NonEmptyStatementList:body
+                              {: RESULT = new MainProcedureDeclaration(position(anchorleft, anchorright), vars, body); :}
+                           ;
+
+VariableDeclaration ::= INT VariableIdentifier:name LBRA INTLIT:size RBRA
+                         {: if (size < 0) {
+                                throw new ErrorMessage.NegativeArraySize(name, size);
+                            }
+                            RESULT = new VariableDeclaration(position(nameleft, nameright), name, new ArrayType(size)); :}
+                      | INT VariableIdentifier:name
+                         {: RESULT = new VariableDeclaration(position(nameleft, nameright), name, PrimitiveType.IntType); :}
+                      | STACK VariableIdentifier:name
+                         {: RESULT = new VariableDeclaration(position(nameleft, nameright), name, PrimitiveType.StackType); :}
+                      ;
+
+ParameterList ::= VariableDeclaration:param ParameterListTail:tail
+                   {: RESULT = cons(param, tail); :}
+                | Epsilon
+                   {: RESULT = nil(); :}
+                ;
+
+ParameterListTail ::= COMMA VariableDeclaration:param ParameterListTail:tail
+                       {: RESULT = cons(param, tail); :}
+                    | Epsilon
+                       {: RESULT = nil(); :}
+                    ;
+
+VariableList ::= VariableDeclaration:dec VariableList:tail
+                  {: RESULT = cons(dec, tail); :}
+               | Epsilon
+                  {: RESULT = nil(); :}
+               ;
+
+Variable ::= VariableIdentifier:name LBRA Expression:index RBRA
+              {: RESULT = new IndexedVariable(position(nameleft, nameright), name, index); :}
+           | VariableIdentifier:name
+              {: RESULT = new NamedVariable(position(nameleft, nameright), name); :}
+           ;
+
+NonEmptyStatementList ::= Statement:stm StatementListTail:tail
+                           {: RESULT = cons(stm, tail); :}
+                        | Epsilon:anchor
+                           {: RESULT = reportError(new ErrorMessage.EmptyStatementList(position(anchorleft, anchorright))); :}
+                        ;
+
+StatementListTail ::= Statement:stm StatementListTail:tail
+                       {: RESULT = cons(stm, tail); :}
+                    | Epsilon
+                       {: RESULT = nil(); :}
+                    ;
+
+Statement ::= AssignStatement:stm {: RESULT = stm; :}
+            | BuiltinStatement:stm {: RESULT = stm; :}
+            | CallStatement:stm {: RESULT = stm; :}
+            | IfStatement:stm {: RESULT = stm; :}
+            | LocalBlockStatement:stm {: RESULT = stm; :}
+            | LoopStatement:stm {: RESULT = stm; :}
+            | SkipStatement:stm {: RESULT = stm; :}
+            | SwapStatement:stm {: RESULT = stm; :}
+            ;
+
+ModificationOperator ::= ADD EQU {: RESULT = AssignStatement.ModificationOperator.ADD; :}
+                       | SUB EQU {: RESULT = AssignStatement.ModificationOperator.SUB; :}
+                       | XOR EQU {: RESULT = AssignStatement.ModificationOperator.XOR; :}
+                       ;
+
+ArgumentList ::= Variable:arg ArgumentListTail:tail
+                  {: RESULT = cons(arg, tail); :}
+               | Epsilon
+                  {: RESULT = nil(); :}
+               ;
+
+ArgumentListTail ::= COMMA Variable:arg ArgumentListTail:tail
+                      {: RESULT = cons(arg, tail); :}
+                   | Epsilon
+                      {: RESULT = nil(); :}
+                   ;
+
+AssignStatement ::= Variable:var ModificationOperator:op Expression:val
+                     {: RESULT = new AssignStatement(position(opleft, opright), var, op, val); :}
+                  ;
+
+CallStatement ::= CALL:anchor IDENT:name LPAR ArgumentList:args RPAR
+                   {: RESULT = new CallStatement(position(anchorleft, anchorright), Direction.FORWARD, name, args); :}
+                | UNCALL:anchor IDENT:name LPAR ArgumentList:args RPAR
+                   {: RESULT = new CallStatement(position(anchorleft, anchorright), Direction.BACKWARD, name, args); :}
+                ;
+
+IfStatement ::= IF:anchor Expression:cond THEN NonEmptyStatementList:tr ELSE NonEmptyStatementList:fl FI Expression:asrt
+                 {: RESULT = new IfStatement(position(anchorleft, anchorright), cond, tr, fl, asrt); :}
+              // If without ELSE branch.
+              | IF:anchor Expression:cond THEN NonEmptyStatementList:tr FI Expression:asrt
+                 {: List<Statement> implicitFl = singleton(new SkipStatement(position(anchorleft, anchorright)));
+                    RESULT = new IfStatement(position(anchorleft, anchorright), cond, tr, implicitFl, asrt); :}
+              // If without THEN branch.
+              | IF:anchor Expression:cond ELSE NonEmptyStatementList:fl FI Expression:asrt
+                 {: List<Statement> implicitTr = singleton(new SkipStatement(position(anchorleft, anchorright)));
+                    RESULT = new IfStatement(position(anchorleft, anchorright), cond, implicitTr, fl, asrt); :}
+              ;
+
+LocalBlockStatement ::= LOCAL:anchor VariableDeclaration:localDec EQU Expression:localExp NonEmptyStatementList:body
+                            DELOCAL VariableDeclaration:delocalDec EQU Expression:delocalExp
+                         {: RESULT = new LocalBlockStatement(position(anchorleft, anchorright),
+                             localDec, localExp, body, delocalDec, delocalExp); :}
+                      | LOCAL:anchor VariableDeclaration EQU Expression NonEmptyStatementList PROCEDURE
+                         {: RESULT = reportError(new ErrorMessage.UnclosedLocal(position(anchorleft, anchorright))); :}
+                      ;
+
+LoopStatement ::= FROM:anchor Expression:fromExp DO NonEmptyStatementList:doBody
+                    LOOP NonEmptyStatementList:loopBody UNTIL Expression:untilExp
+                   {: RESULT = new LoopStatement(position(anchorleft, anchorright), fromExp, doBody, loopBody, untilExp); :}
+                // Loop without LOOP statements.
+                | FROM:anchor Expression:fromExp DO NonEmptyStatementList:doBody UNTIL Expression:untilExp
+                   {: RESULT = new LoopStatement(position(anchorleft, anchorright), fromExp, doBody,
+                       singleton(new SkipStatement(position(anchorleft, anchorright))), untilExp); :}
+                // Loop without DO statements.
+                | FROM:anchor Expression:fromExp LOOP NonEmptyStatementList:loopBody UNTIL Expression:untilExp
+                   {: RESULT = new LoopStatement(position(anchorleft, anchorright), fromExp,
+                       singleton(new SkipStatement(position(anchorleft, anchorright))), loopBody, untilExp); :}
+                ;
+
+SkipStatement ::= SKIP:anchor
+                   {: RESULT = new SkipStatement(position(anchorleft, anchorright)); :}
+                ;
+
+SwapStatement ::= Variable:lhs SWAP:anchor Variable:rhs
+                   {: RESULT = new SwapStatement(position(anchorleft, anchorright), lhs, rhs); :}
+                ;
+
+BuiltinStatement ::= BuiltinProcedure:anchor LPAR ArgumentList:args RPAR
+                      {: RESULT = new BuiltinStatement(position(anchorleft, anchorright), anchor, args); :}
+                   ;
+
+BuiltinProcedure ::= POP    {: RESULT = Builtins.Procedure.STACK_POP; :}
+                   | PUSH   {: RESULT = Builtins.Procedure.STACK_PUSH; :}
+                   | READ   {: RESULT = Builtins.Procedure.READ; :}
+                   | WRITE  {: RESULT = Builtins.Procedure.WRITE; :}
+                   | READC  {: RESULT = Builtins.Procedure.READ_C; :}
+                   | WRITEC {: RESULT = Builtins.Procedure.WRITE_C; :}
+                   ;
+
+
+RelationalOperator ::= LST {: RESULT = BinaryExpression.BinaryOperator.LST; :}
+                     | LSE {: RESULT = BinaryExpression.BinaryOperator.LSE; :}
+                     | GRT {: RESULT = BinaryExpression.BinaryOperator.GRT; :}
+                     | GRE {: RESULT = BinaryExpression.BinaryOperator.GRE; :}
+                     | EQU {: RESULT = BinaryExpression.BinaryOperator.EQU; :}
+                     | NEQ {: RESULT = BinaryExpression.BinaryOperator.NEQ; :}
+                     ;
+AdditiveOperator ::= ADD {: RESULT = BinaryExpression.BinaryOperator.ADD; :}
+                   | SUB {: RESULT = BinaryExpression.BinaryOperator.SUB; :}
+                   ;
+MultiplicativeOperator ::= MUL {: RESULT = BinaryExpression.BinaryOperator.MUL; :}
+                         | DIV {: RESULT = BinaryExpression.BinaryOperator.DIV; :}
+                         | MOD {: RESULT = BinaryExpression.BinaryOperator.MOD; :}
+                         ;
+
+Expression ::= DisjExpression:exp
+                {: RESULT = exp; :}
+             ;
+
+DisjExpression ::= DisjExpression:lhs DISJ:op ConjExpression:rhs
+                    {: RESULT = new BinaryExpression(position(opleft, opright), lhs,
+                        BinaryExpression.BinaryOperator.DISJ, rhs); :}
+                 | ConjExpression:exp
+                    {: RESULT = exp; :}
+                 ;
+
+ConjExpression ::= ConjExpression:lhs CONJ:op OrExpression:rhs
+                    {: RESULT = new BinaryExpression(position(opleft, opright), lhs,
+                        BinaryExpression.BinaryOperator.CONJ, rhs); :}
+                 | OrExpression:exp
+                    {: RESULT = exp; :}
+                ;
+
+OrExpression ::= OrExpression:lhs OR:op XorExpression:rhs
+                  {: RESULT = new BinaryExpression(position(opleft, opright), lhs,
+                        BinaryExpression.BinaryOperator.OR, rhs); :}
+               | XorExpression:exp
+                  {: RESULT = exp; :}
+               ;
+
+XorExpression ::= XorExpression:lhs XOR:op AndExpression:rhs
+                   {: RESULT = new BinaryExpression(position(opleft, opright), lhs,
+                        BinaryExpression.BinaryOperator.XOR, rhs); :}
+                | AndExpression:exp
+                   {: RESULT = exp; :}
+                ;
+
+AndExpression ::= AndExpression:lhs AND:op RelationalExpression:rhs
+                   {: RESULT = new BinaryExpression(position(opleft, opright), lhs,
+                        BinaryExpression.BinaryOperator.AND, rhs); :}
+                | RelationalExpression:exp
+                   {: RESULT = exp; :}
+                ;
+
+RelationalExpression ::= RelationalExpression:lhs RelationalOperator:op AdditiveExpression:rhs
+                          {: RESULT = new BinaryExpression(position(opleft, opright), lhs, op, rhs); :}
+                       | AdditiveExpression:exp
+                          {: RESULT = exp; :}
+                       ;
+
+AdditiveExpression ::= AdditiveExpression:lhs AdditiveOperator:op MultiplicativeExpression:rhs
+                        {: RESULT = new BinaryExpression(position(opleft, opright), lhs, op, rhs); :}
+                     | MultiplicativeExpression:lhs INTLIT:lit
+                        {: Position position = position(litleft, litright);
+                           if (lit >= 0) {
+                               throw new ErrorMessage.SyntaxError(position, List.of("subtraction operator"));
+                           } else {
+                               IntLiteral rhs = new IntLiteral(position, -lit);
+                               RESULT = new BinaryExpression(position(lhsleft, lhsright), lhs,
+                                                BinaryExpression.BinaryOperator.SUB, rhs);
+                           } :}
+                     | MultiplicativeExpression:exp
+                        {: RESULT = exp; :}
+                     ;
+
+MultiplicativeExpression ::= MultiplicativeExpression:lhs MultiplicativeOperator:op AtomicExpression:rhs
+                              {: RESULT = new BinaryExpression(position(opleft, opright), lhs, op, rhs); :}
+                           | AtomicExpression:exp
+                              {: RESULT = exp; :}
+                           ;
+
+AtomicExpression ::= INTLIT:lit
+                      {: RESULT = new IntLiteral(position(litleft, litright), lit); :}
+                   | NIL:nil
+                      {: RESULT = new StackNilLiteral(position(nilleft, nilright)); :}
+                   | BuiltinExpression:anchor LPAR ArgumentList:args RPAR
+                      {: RESULT = new BuiltinExpression(position(anchorleft, anchorright), anchor, args); :}
+                   | Variable:var
+                      {: RESULT = new VariableExpression(position(varleft, varright), var); :}
+                   | LPAR Expression:exp RPAR
+                      {: RESULT = exp; :}
+                   ;
+
+BuiltinExpression ::= EMPTY {: RESULT = Builtins.Expression.EMPTY; :}
+                    | TOP   {: RESULT = Builtins.Expression.TOP; :}
+                    ;

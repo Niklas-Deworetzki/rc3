@@ -1,0 +1,40 @@
+@Heap(size=102400)
+@Memory(value=100,address=20)
+@Entry(value="main")
+// Code for procedure ackermann:
+begin ackermann(n_0, m_0, result_0)
+n_0 == 0 -> Lackermann_5(m_0, result_0, n_0)Lackermann_6
+Lackermann_5(m_1, result_1, n_1) <-
+result_4 := result_1 + (m_1 + 1)
+-> Lackermann_15(m_1, n_1, result_4)
+Lackermann_6(m_2, result_2, n_2) <-
+m_2 == 0 -> Lackermann_11(m_2, n_2, result_2)Lackermann_12
+Lackermann_11(m_5, n_5, result_6) <-
+one_0 := 0 ^ (1 ^ 0)
+n1_0 := 0 ^ (n_5 - 1)
+(n1_1,one_1,result_9) := call ackermann(n1_0,one_0,result_6)
+0 := n1_1 ^ (n_5 - 1)
+0 := one_1 ^ (1 ^ 0)
+-> Lackermann_13(m_5, n_5, result_9)
+Lackermann_12(m_6, n_6, result_7) <-
+n1_2 := 0 ^ (n_6 - 1)
+m1_0 := 0 ^ (m_6 - 1)
+tr_0 := 0 ^ (0 ^ 0)
+(n_9,m1_1,tr_1) := call ackermann(n_6,m1_0,tr_0)
+(n1_3,tr_2,result_11) := call ackermann(n1_2,tr_1,result_7)
+(n_10,m1_2,tr_3) := uncall ackermann(n_9,m1_1,tr_2)
+0 := tr_3 ^ (0 ^ 0)
+0 := m1_2 ^ (m_6 - 1)
+0 := n1_3 ^ (n_10 - 1)
+-> Lackermann_14(m_6, n_10, result_11)
+Lackermann_13(m_11, n_13, result_14)Lackermann_14 <- m_11 == 0
+-> Lackermann_16(m_11, n_13, result_14)
+Lackermann_15(m_14, n_16, result_17)Lackermann_16 <- n_16 == 0
+end ackermann(n_16, m_14, result_17)
+
+// Code for procedure main:
+begin main(n_0  @Param(name="n",type="Int",value=0), m_0  @Param(name="m",type="Int",value=0), result_0  @Param(name="result",type="Int",value=0))
+n_1 := n_0 + (2 ^ 0)
+m_1 := m_0 + (8 ^ 0)
+(n_2,m_2,result_1) := call ackermann(n_1,m_1,result_0)
+end main(n_2  @Param(name="n",type="Int",value=0), m_2  @Param(name="m",type="Int",value=0), result_1  @Param(name="result",type="Int",value=0))

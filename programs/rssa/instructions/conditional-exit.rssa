@@ -1,0 +1,15 @@
+begin main()
+x := 1 + (0 + 0)
+x > 0 -> true(x)false
+false(x) <-
+res := x + (5 ^ 0) // does not get executed, so no error occurs later!
+true(x) <-
+res := x + (2 ^ 0)
+end main(res)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    res = 3
+
+*/

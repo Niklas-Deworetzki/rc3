@@ -1,0 +1,14 @@
+begin main()
+() := call t()
+end main()
+
+begin t()
+0:= 1 + (2 - 3)
+-> exit()
+
+/*
+Error: End instruction for subroutine 't' is missing.
+programs/rssa/vm/passes/global/unclosedSubroutine2.rssa: Line 5, column 1
+  5 | begin t()
+    | ^
+*/

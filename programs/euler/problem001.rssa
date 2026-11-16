@@ -1,0 +1,45 @@
+// Problem 1 – Multiples of 3 and 5
+// If we list all the natural numbers below 10 that are multiples of 3 or 5, we get 3, 5, 6 and 9. The sum of these multiples is 23.
+// Find the sum of all the multiples of 3 or 5 below 1000.
+//
+// Author: Niklas Deworetzki
+
+begin main(upper_bound @Param(1000))
+    -> Enter(1, 0, upper_bound)
+
+    Enter(n_0, sum_0, upper_bound_0)Loop <- (n_0 == 1)
+        (n_1, divisors_0) := call divisors_in_3_or_5(n_0)
+        (divisors_0 > 0) -> Inc_If(divisors_0, n_1, sum_0, upper_bound_0)Skip
+
+        Inc_If(divisors_1, n_2, sum_1, upper_bound_1) <-
+            sum_2 := sum_1 + n_2
+        -> Inc_Fi(divisors_1, n_2, sum_2, upper_bound_1)
+
+        Inc_Fi(divisors_2, n_3, sum_3, upper_bound_2)Skip <- (divisors_2 > 0)
+        (n_4) := uncall divisors_in_3_or_5(n_3, divisors_2)
+        n_5 := n_4 + 1
+    (n_5 == upper_bound_2) -> Exit(n_5, sum_3, upper_bound_2)Loop
+
+    Exit(n_6, sum_4, upper_bound_3) <-
+    0 := n_6 ^ (upper_bound_3)
+end main(upper_bound_3 @Param(name="Upper bound of natural numbers"), sum_4 @Param(name = "Sum of numbers divisible by 3 or 5"))
+
+begin divisors_in_3_or_5(p_0)
+    n_0 := 0
+
+    rem3_0 := 0 ^ (p_0 % 3)
+    (rem3_0 == 0) -> L3_If(p_0, n_0, rem3_0)L3_Skip
+    L3_If(p_1, n_1, 0) <-
+        n_2 := n_1 + 1
+    -> L3_Fi(p_1, n_2, 0)
+    L3_Fi(p_2, n_3, rem3_1)L3_Skip <- (rem3_1 == 0)
+    0 := rem3_1 ^ (p_2 % 3)
+
+    rem5_0 := 0 ^ (p_2 % 5)
+    (rem5_0 == 0) -> L5_If(p_2, n_3, rem5_0)L5_Skip
+    L5_If(p_3, n_4, 0) <-
+        n_5 := n_4 + 1
+    -> L5_Fi(p_3, n_5, 0)
+    L5_Fi(p_4, n_6, rem5_1)L5_Skip <- (rem5_1 == 0)
+    0 := rem5_1 ^ (p_4 % 5)
+end divisors_in_3_or_5(p_4, n_6)

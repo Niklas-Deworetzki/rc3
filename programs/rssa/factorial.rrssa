@@ -1,0 +1,22 @@
+@Heap(size=102400)
+@Memory(value=100,address=20)
+@Entry(value="main")
+// Code for procedure main:
+begin main(x_0  @Param(name="x",type="Int",value=5), result_0  @Param(name="result",type="Int",value=0))
+(x_1,result_1) := call factorial(x_0,result_0)
+end main(x_1  @Param(name="x",type="Int",value=0), result_1  @Param(name="result",type="Int",value=120))
+
+// Code for procedure factorial:
+begin factorial(n_0, result_0)
+result_1 := result_0 + (1 ^ 0)
+-> Lfactorial_1(n_0, result_1)
+Lfactorial_1(n_1, result_2)Lfactorial_3 <- result_2 == 1
+product_0 := 0 ^ (result_2 * n_1)
+product_1, result_3 := result_2, product_0
+0 := product_1 ^ (result_3 / n_1)
+n_2 := n_1 - (1 ^ 0)
+n_2 == 0 -> Lfactorial_4(n_2, result_3)Lfactorial_2
+Lfactorial_2(n_3, result_4) <-
+-> Lfactorial_3(n_3, result_4)
+Lfactorial_4(n_4, result_5) <-
+end factorial(n_4, result_5)

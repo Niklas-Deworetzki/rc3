@@ -1,0 +1,595 @@
+procedure exec(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    from type[pc] = 125 // n_stmt_start
+    do
+        pc += 1
+    loop
+        call exec1(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp )
+    until type[pc] = 126 // n_stmt_end
+    pc += 1
+
+procedure exec1(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    if type[pc] = 111 // n_aop_start
+      then call exec_aop(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    else if type[pc] = 114 // n_if_start
+      then call exec_if(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    else if type[pc] = 118 // n_from_start
+      then call exec_from(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    else if type[pc] = 122 // n_call
+      then call exec_call(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    else if type[pc] = 123 // n_uncall
+      then call exec_uncall(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    else if type[pc] = 124 // n_skip
+      then skip
+    else if type[pc] = 127 // n_swap_start
+      then call exec_swap(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    else local int errCode = 11111 call error(errCode) delocal int errCode = 11111 // error
+    fi type[pc] = 128 // n_swap_end
+    fi type[pc] = 124 // n_skip
+    fi type[pc] = 123 // n_uncall
+    fi type[pc] = 122 // n_call
+    fi type[pc] = 121 // n_until_end
+    fi type[pc] = 117 // n_fi_end
+    fi type[pc] = 113 // n_aop_end
+
+procedure exec_call(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    call exec_call_pc_swap(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    uncall next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2)
+    uncall exec_call_pc_swap(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+
+procedure exec_call_pc_swap(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    tmp ^= para[pc]
+    pc <=> tmp
+    call alloc_tmp(tmp, tmp_sp, tmp_stack)
+
+procedure exec_uncall(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    uncall exec_call(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+
+procedure exec_if(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    if result != 0 then
+        uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        pc -= 1
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to then
+        call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to fi
+        pc += 1
+        call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    else
+        uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        pc -= 1
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to then
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to else
+        call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+        pc += 1
+        call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    fi result != 0
+    uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    pc -= 1
+    call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to end of stmt
+    pc -= 1
+
+procedure exec_aop(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    call exec_aop_args(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    call exec_aop_upd(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2)
+    uncall exec_aop_args(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to end of stmt
+    pc -= 1
+
+procedure exec_aop_args(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    pc += 1
+    aop ^= para[pc]
+    // copy assignment op.
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack) // evaluation of lhs
+    tmp_lhs <=> result
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack) // evaluation of rhs
+
+procedure exec_from(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    from result != 0
+    do
+        uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        pc -= 1
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to do
+        call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to until
+        pc += 1
+        call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    loop
+        uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        pc -= 1
+        uncall next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to loop
+        call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+        uncall next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to loop
+        uncall next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to do
+        uncall next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to from
+        pc += 1
+        call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    until result != 0
+    uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    pc -= 1
+    call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2) // to end of stmt
+    pc -= 1
+
+procedure exec_aop_upd(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2)
+    if aop = 200 // n_aop_plus
+        then sigma[tmp_lhs]+=result
+    else if aop = 201 // n_aop_minus
+        then sigma[tmp_lhs]-=result
+    else if aop = 202 // n_aop_xor
+        then sigma[tmp_lhs]^=result
+    else local int errCode = 22222 call error(errCode) delocal int errCode = 22222 // error
+    fi aop = 202 // n_aop_xor
+    fi aop = 201 // n_aop_minus
+    fi aop = 200 // n_aop_plus
+
+  procedure exec_swap(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256], int result_tmp, int arg1_tmp, int arg2_tmp, int op_tmp)
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    result_tmp <=> result
+    op_tmp <=> op
+    arg1_tmp <=> arg1
+    arg2_tmp <=> arg2
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    sigma[result_tmp] <=> sigma[result]
+    uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    arg2_tmp <=> arg2
+    arg1_tmp <=> arg1
+    op_tmp <=> op
+    result_tmp <=> result
+    uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    pc -= 1
+    call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2)
+    pc -= 1
+
+procedure next(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2)
+    next_tmp += para[pc] // using += instead of ^= to make it compatible to the sint programs online
+    pc += next_tmp
+    next_tmp += para[pc] // using += instead of ^= to make it compatible to the sint programs online
+    pc += 1
+
+procedure eval(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    if type[pc] = 100 then // n_con
+        result ^= para[pc]
+    else if type[pc] = 101 then // n_var
+        result^=sigma[para[pc]]
+    else if type[pc] = 108 then // n_arr_start
+        call eval_arr(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2)
+        pc-=1
+    else if type[pc] = 102 then // n_bop_start
+        call eval_bop(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+        call next(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2)
+        pc-=1
+    else local int errCode = 33333 call error(errCode) delocal int errCode = 33333 // error
+    fi type[pc] = 104 // n_bop_end
+    fi type[pc] = 110 // n_arr_end
+    fi type[pc] = 101 // n_var
+    fi type[pc] = 100 // n_con
+    pc+=1
+
+procedure eval_bop(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    call alloc_tmp(tmp, tmp_sp, tmp_stack)
+    call eval_bop_args(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    if op = 303 // n_plus
+      then tmp ^= arg1 + arg2
+    else if op = 304 // n_minus
+      then tmp ^= arg1 - arg2
+    //else if op = 309 // n_smf
+    //  then tmp ^= arg1 */ arg2
+    else if op = 310 // n_and
+      then tmp ^= arg1 & arg2
+    else if op = 305 // n_xor
+      then tmp ^= arg1 ^ arg2
+    else if op = 306 // n_times
+      then tmp ^= arg1 * arg2
+    else if op = 307 // n_div
+      then tmp ^= arg1 / arg2
+    else if op = 308 // n_mod
+      then tmp ^= arg1 % arg2
+    else if op = 311 // n_or
+      then tmp ^= arg1 | arg2
+    //else if op = 312 // n_andand
+      //then tmp ^= arg1 && arg2
+    //else if op = 313 // n_oror
+      //then tmp ^= arg1 || arg2
+    else if op = 314 // n_lt
+      then if arg1 < arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 < arg2
+    else if op = 315 // n_gt
+      then if arg1 > arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 > arg2
+    else if op = 316 // n_eq
+      then if arg1 = arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 = arg2
+    else if op = 317 // n_neq
+      then if arg1 != arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 != arg2
+    else if op = 318 // n_le
+      then if arg1 <= arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 <= arg2
+    else if op = 319 // n_ge
+      then if arg1 >= arg2 then tmp ^= 1 else tmp ^= 0 fi arg1 >= arg2
+    //else if 1 fi 0 // TODO wozu? Error?
+    fi op = 319 // n_ge
+    fi op = 318 // n_le
+    fi op = 317 // n_neq
+    fi op = 316 // n_eq
+    fi op = 315 // n_gt
+    fi op = 314 // n_lt
+    //fi op = 313 // n_oror
+    //fi op = 312 // n_andand
+    fi op = 311 // n_or
+    fi op = 308 // n_mod
+    fi op = 307 // n_div
+    fi op = 306 // n_times
+    fi op = 305 // n_xor
+    fi op = 310 // n_and
+    //fi op = 309 // n_smf
+    fi op = 304 // n_minus
+    fi op = 303 // n_plus
+    uncall eval_bop_args(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    result <=> tmp
+    uncall alloc_tmp(tmp, tmp_sp, tmp_stack)
+
+procedure eval_bop_args(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    pc += 1
+    op ^= para[pc] // copy op.
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    arg1 <=> result
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    arg2 <=> result
+
+procedure alloc_tmp(int tmp, int tmp_sp, int tmp_stack[256])
+    tmp_sp += 1
+    tmp <=> tmp_stack[tmp_sp]
+
+procedure eval_arr(int type[256], int pc, int para[256], int tmp, int result, int aop, int sigma[512], int tmp_lhs, int next_tmp, int op, int bop_tmp, int arg1, int arg2, int tmp_sp, int tmp_stack[256])
+    pc+=1
+    call alloc_tmp(tmp, tmp_sp, tmp_stack)
+    tmp_lhs <=> tmp
+    tmp_lhs ^= para[pc] // name of array
+    pc += 1
+    call eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    tmp_lhs += result   // index of array
+    call alloc_tmp(tmp, tmp_sp, tmp_stack)
+    tmp ^= sigma[tmp_lhs] // value of array
+    tmp_lhs -= result   // index of array
+    uncall eval(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack)
+    pc -= 1
+    tmp_lhs ^= para[pc] // name of array
+    if result != 0
+        then local int errCode = 44444 call error(errCode) delocal int errCode = 44444 // error
+    fi result != 0
+    result <=> tmp
+    uncall alloc_tmp(tmp, tmp_sp, tmp_stack)
+    if tmp_lhs != 0
+        then local int errCode = 55555 call error(errCode) delocal int errCode = 55555 // error
+    fi tmp_lhs != 0
+    tmp_lhs <=> tmp
+    uncall alloc_tmp(tmp, tmp_sp, tmp_stack)
+    pc-=1
+
+// Neu
+procedure error(int errCode)
+    local int error = 0
+        skip
+    delocal int error = errCode
+
+procedure main()
+    // constants
+    int tmp_stack[256]
+    int tmp_sp
+    int tmp
+    int type[256]
+    int para[256]
+    int pc
+    int result
+    int result_tmp
+    int aop
+    int sigma[512] // speicher
+    int tmp_lhs
+    int next_tmp
+    int op
+    int op_tmp
+    int bop_tmp
+    int arg1
+    int arg1_tmp
+    int arg2
+    int arg2_tmp
+
+    int n_con
+    int n_var
+    int n_bop_start
+    int n_bop           // unused
+    int n_bop_end
+    int n_neg_start     // unused
+    int n_neg           // unused
+    int n_neg_end       // unused
+    int n_arr_start
+    int n_arr           // unused
+    int n_arr_end
+    int n_aop_start
+    int n_aop           // unused
+    int n_aop_end
+    int n_if_start
+    int n_if_end        // unused
+    int n_fi_start      // unused
+    int n_fi_end
+    int n_from_start
+    int n_from_end      // unused
+    int n_until_start   // unused
+    int n_until_end
+    int n_call
+    int n_uncall
+    int n_skip
+    int n_stmt_start
+    int n_stmt_end
+    int n_swap_start
+    int n_swap_end
+
+    // Parameters
+    int n_aop_plus
+    int n_aop_minus
+    int n_aop_xor
+
+    int n_plus
+    int n_minus
+    int n_xor
+    int n_times
+    int n_div
+    int n_mod
+    //int n_smf TODO
+    int n_and
+    int n_or
+    //int n_andand
+    //int n_oror
+    int n_lt
+    int n_gt
+    int n_eq
+    int n_neq
+    int n_le
+    int n_ge
+
+    // setup
+    pc ^= 0 // Program counter
+    tmp_sp ^= -1 // stack pointer
+
+
+    // encodings:
+    n_con          ^=100
+    n_var          ^=101
+    n_bop_start    ^=102
+    n_bop          ^=103 // unused
+    n_bop_end      ^=104
+    n_neg_start    ^=105 // unused
+    n_neg          ^=106 // unused
+    n_neg_end      ^=107 // unused
+    n_arr_start    ^=108
+    n_arr          ^=109 // unused
+    n_arr_end      ^=110
+    n_aop_start    ^=111
+    n_aop          ^=112 // unused
+    n_aop_end      ^=113
+    n_if_start     ^=114
+    n_if_end       ^=115 // unused
+    n_fi_start     ^=116 // unused
+    n_fi_end       ^=117
+    n_from_start   ^=118
+    n_from_end     ^=119 // unused
+    n_until_start  ^=120 // unused
+    n_until_end    ^=121
+    n_call         ^=122
+    n_uncall       ^=123
+    n_skip         ^=124
+    n_stmt_start   ^=125
+    n_stmt_end     ^=126
+    n_swap_start   ^=127
+    n_swap_end     ^=128
+
+    // Parameters
+    n_aop_plus     ^=200
+    n_aop_minus    ^=201
+    n_aop_xor      ^=202
+
+    n_plus       ^=303
+    n_minus      ^=304
+    n_xor        ^=305
+    n_times      ^=306
+    n_div        ^=307
+    n_mod        ^=308
+    //n_smf        ^=309
+    n_and        ^=310
+    n_or         ^=311
+    //n_andand     ^=312 TODO
+    //n_oror       ^=313 TODO
+    n_lt         ^=314
+    n_gt         ^=315
+    n_eq         ^=316
+    n_neq        ^=317
+    n_le         ^=318
+    n_ge         ^=319
+
+////////////////////
+// CODE STARTS HERE
+////////////////////
+
+/* ORIGINAL JANUS CODE
+procedure main()
+    int n
+    int x1
+    int x2
+    x1 += 5
+    x2 += 8
+    uncall fib(n, x1, x2)
+
+procedure fib(int n, int x1, int x2)
+  if n=0 then x1 += 1
+              x2 += 1
+         else n -= 1
+              call fib(n, x1, x2)
+              x1 += x2
+              x1 ^= x2
+              x2 ^= x1
+              x1 ^= x2
+  fi x1=x2
+*/
+
+
+/* REQUIREMENTS
+sigma[3] tmp_stack[8]
+type[64] para[64]
+*/
+
+
+// COPY CODE FROM HERE
+// TEST SINT FIB BWD WITHOUT SWAP
+  type[0]+=n_stmt_start	//procedure main_fwd
+  type[1]+=n_aop_start
+  type[2]+=n_aop
+  type[3]+=n_con
+  type[4]+=n_con	//5
+  type[5]+=n_aop_end
+  type[6]+=n_aop_start
+  type[7]+=n_aop
+  type[8]+=n_con
+  type[9]+=n_con	//8
+  type[10]+=n_aop_end
+  type[11]+=n_uncall
+  type[12]+=n_stmt_end	//procedure main_fwd
+
+  type[13]+=n_stmt_start	//procedure fib
+  type[14]+=n_if_start
+  type[15]+=n_bop_start	//n_eq
+  type[16]+=n_bop
+  type[17]+=n_var
+  type[18]+=n_con	//0
+  type[19]+=n_bop_end	//n_eq
+  type[20]+=n_if_end
+  type[21]+=n_stmt_start
+  type[22]+=n_aop_start
+  type[23]+=n_aop
+  type[24]+=n_con
+  type[25]+=n_con	//1
+  type[26]+=n_aop_end
+  type[27]+=n_aop_start
+  type[28]+=n_aop
+  type[29]+=n_con
+  type[30]+=n_con	//1
+  type[31]+=n_aop_end
+  type[32]+=n_stmt_end
+  type[33]+=n_stmt_start
+  type[34]+=n_aop_start
+  type[35]+=n_aop
+  type[36]+=n_con
+  type[37]+=n_con	//1
+  type[38]+=n_aop_end
+  type[39]+=n_call
+  type[40]+=n_aop_start
+  type[41]+=n_aop
+  type[42]+=n_con
+  type[43]+=n_var
+  type[44]+=n_aop_end
+  type[45]+=n_aop_start
+  type[46]+=n_aop
+  type[47]+=n_con
+  type[48]+=n_var
+  type[49]+=n_aop_end
+  type[50]+=n_aop_start
+  type[51]+=n_aop
+  type[52]+=n_con
+  type[53]+=n_var
+  type[54]+=n_aop_end
+  type[55]+=n_aop_start
+  type[56]+=n_aop
+  type[57]+=n_con
+  type[58]+=n_var
+  type[59]+=n_aop_end
+  type[60]+=n_stmt_end
+  type[61]+=n_fi_start
+  type[62]+=n_bop_start	//n_eq
+  type[63]+=n_bop
+  type[64]+=n_var
+  type[65]+=n_var
+  type[66]+=n_bop_end	//n_eq
+  type[67]+=n_fi_end
+  type[68]+=n_stmt_end	//procedure fib
+
+  para[0]+=12	//n_stmt_start main_fwd
+  para[1]+=4	//n_aop_start
+  para[2]+=n_aop_plus
+  para[3]+=1	//(lvalue: x1)
+  para[4]+=5	//n_con
+  para[5]+= -4	//n_aop_end
+  para[6]+=4	//n_aop_start
+  para[7]+=n_aop_plus
+  para[8]+=2	//(lvalue: x2)
+  para[9]+=8	//n_con
+  para[10]+= -4	//n_aop_end
+  para[11]+=13	//call to fib
+  para[12]+= -12	//n_stmt_end main_fwd
+
+  para[13]+=55	//n_stmt_start fib
+  para[14]+=6	//n_if_start
+  para[15]+=4	//n_bop_start
+  para[16]+=n_eq	//n_bop
+  para[17]+=0	//(lvalue: n)
+  para[18]+=0	//n_con
+  para[19]+= -4	//n_bop_end
+  para[20]+= -6	//n_if_end
+  para[21]+=11	//n_stmt_start
+  para[22]+=4	//n_aop_start
+  para[23]+=n_aop_plus
+  para[24]+=1	//(lvalue: x1)
+  para[25]+=1	//n_con
+  para[26]+= -4	//n_aop_end
+  para[27]+=4	//n_aop_start
+  para[28]+=n_aop_plus
+  para[29]+=2	//(lvalue: x2)
+  para[30]+=1	//n_con
+  para[31]+= -4	//n_aop_end
+  para[32]+= -11	//n_stmt_end
+  para[33]+=27	//n_stmt_start
+  para[34]+=4	//n_aop_start
+  para[35]+=n_aop_minus
+  para[36]+=0	//(lvalue: n)
+  para[37]+=1	//n_con
+  para[38]+= -4	//n_aop_end
+  para[39]+=13	//call to fib
+  para[40]+=4	//n_aop_start
+  para[41]+=n_aop_plus
+  para[42]+=1	//(lvalue: x1)
+  para[43]+=2	//(lvalue: x2)
+  para[44]+= -4	//n_aop_end
+  para[45]+=4	//n_aop_start
+  para[46]+=n_aop_xor
+  para[47]+=1	//(lvalue: x1)
+  para[48]+=2	//(lvalue: x2)
+  para[49]+= -4	//n_aop_end
+  para[50]+=4	//n_aop_start
+  para[51]+=n_aop_xor
+  para[52]+=2	//(lvalue: x2)
+  para[53]+=1	//(lvalue: x1)
+  para[54]+= -4	//n_aop_end
+  para[55]+=4	//n_aop_start
+  para[56]+=n_aop_xor
+  para[57]+=1	//(lvalue: x1)
+  para[58]+=2	//(lvalue: x2)
+  para[59]+= -4	//n_aop_end
+  para[60]+= -27	//n_stmt_end
+  para[61]+=6	//n_fi_start
+  para[62]+=4	//n_bop_start
+  para[63]+=n_eq	//n_bop
+  para[64]+=1	//(lvalue: x1)
+  para[65]+=2	//(lvalue: x2)
+  para[66]+= -4	//n_bop_end
+  para[67]+= -6	//n_fi_end
+  para[68]+= -55	//n_stmt_end fib
+
+////////////////////
+// CODE ENDS HERE
+////////////////////
+
+
+    // execute code
+    call exec(type, pc, para, tmp, result, aop, sigma, tmp_lhs, next_tmp, op, bop_tmp, arg1, arg2, tmp_sp, tmp_stack, result_tmp, arg1_tmp, arg2_tmp, op_tmp)
+    //write(sigma[0])

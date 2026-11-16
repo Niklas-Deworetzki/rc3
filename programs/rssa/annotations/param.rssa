@@ -1,0 +1,10 @@
+begin main(x, y @Param(type="Int", value=1), z @Param(type="Int", value=2))
+end main(x @Param(type="Int", value=0, name="a"), y @Param(type="Int", value=0, name="b", hidden=1), z)
+
+/* Output with option --print-main should look like this: (forward)
+
+    Variables at end of 'main' procedure:
+    a = 0
+    z = 2
+
+*/

@@ -1,0 +1,7 @@
+
+@Entry(f)
+
+begin f(a, b)
+0 == 0 -> h(a, b)g
+g(0, x) <-
+end f(x)

@@ -1,0 +1,16 @@
+begin main ()
+M[5] += 6 + 0
+M[6] += 5 + 0
+M[5] <-> M[6]
+memoryAt5 := 0 + (M[5] + 0)
+memoryAt6 := 0 + (M[6] + 0)
+end main(memoryAt5, memoryAt6)
+
+/*
+Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    memoryAt5 = 5
+    memoryAt6 = 6
+
+*/

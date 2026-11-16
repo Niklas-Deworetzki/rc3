@@ -1,0 +1,171 @@
+/* ORIGINAL JANUS CODE
+procedure main()
+    int n
+    int x1
+    int x2
+    x1 += 5
+    x2 += 8
+    uncall fib(n, x1, x2)
+
+procedure fib(int n, int x1, int x2)
+  if n=0 then x1 += 1
+              x2 += 1
+         else n -= 1
+              call fib(n, x1, x2)
+              x1 += x2
+              x1 ^= x2
+              x2 ^= x1
+              x1 ^= x2
+  fi x1=x2
+*/
+
+
+/* REQUIREMENTS
+sigma[3] tmp_stack[8]
+type[64] para[64]
+*/
+
+
+// COPY CODE FROM HERE
+// TEST SINT FIB BWD WITHOUT SWAP
+  type[0]+=n_stmt_start	//procedure main_fwd
+  type[1]+=n_aop_start
+  type[2]+=n_aop
+  type[3]+=n_con
+  type[4]+=n_con	//5
+  type[5]+=n_aop_end
+  type[6]+=n_aop_start
+  type[7]+=n_aop
+  type[8]+=n_con
+  type[9]+=n_con	//8
+  type[10]+=n_aop_end
+  type[11]+=n_uncall
+  type[12]+=n_stmt_end	//procedure main_fwd
+
+  type[13]+=n_stmt_start	//procedure fib
+  type[14]+=n_if_start
+  type[15]+=n_bop_start	//n_eq
+  type[16]+=n_bop
+  type[17]+=n_var
+  type[18]+=n_con	//0
+  type[19]+=n_bop_end	//n_eq
+  type[20]+=n_if_end
+  type[21]+=n_stmt_start
+  type[22]+=n_aop_start
+  type[23]+=n_aop
+  type[24]+=n_con
+  type[25]+=n_con	//1
+  type[26]+=n_aop_end
+  type[27]+=n_aop_start
+  type[28]+=n_aop
+  type[29]+=n_con
+  type[30]+=n_con	//1
+  type[31]+=n_aop_end
+  type[32]+=n_stmt_end
+  type[33]+=n_stmt_start
+  type[34]+=n_aop_start
+  type[35]+=n_aop
+  type[36]+=n_con
+  type[37]+=n_con	//1
+  type[38]+=n_aop_end
+  type[39]+=n_call
+  type[40]+=n_aop_start
+  type[41]+=n_aop
+  type[42]+=n_con
+  type[43]+=n_var
+  type[44]+=n_aop_end
+  type[45]+=n_aop_start
+  type[46]+=n_aop
+  type[47]+=n_con
+  type[48]+=n_var
+  type[49]+=n_aop_end
+  type[50]+=n_aop_start
+  type[51]+=n_aop
+  type[52]+=n_con
+  type[53]+=n_var
+  type[54]+=n_aop_end
+  type[55]+=n_aop_start
+  type[56]+=n_aop
+  type[57]+=n_con
+  type[58]+=n_var
+  type[59]+=n_aop_end
+  type[60]+=n_stmt_end
+  type[61]+=n_fi_start
+  type[62]+=n_bop_start	//n_eq
+  type[63]+=n_bop
+  type[64]+=n_var
+  type[65]+=n_var
+  type[66]+=n_bop_end	//n_eq
+  type[67]+=n_fi_end
+  type[68]+=n_stmt_end	//procedure fib
+
+  para[0]+=12	//n_stmt_start main_fwd
+  para[1]+=4	//n_aop_start
+  para[2]+=n_aop_plus
+  para[3]+=1	//(lvalue: x1)
+  para[4]+=5	//n_con
+  para[5]+= -4	//n_aop_end
+  para[6]+=4	//n_aop_start
+  para[7]+=n_aop_plus
+  para[8]+=2	//(lvalue: x2)
+  para[9]+=8	//n_con
+  para[10]+= -4	//n_aop_end
+  para[11]+=13	//call to fib
+  para[12]+= -12	//n_stmt_end main_fwd
+
+  para[13]+=55	//n_stmt_start fib
+  para[14]+=6	//n_if_start
+  para[15]+=4	//n_bop_start
+  para[16]+=n_eq	//n_bop
+  para[17]+=0	//(lvalue: n)
+  para[18]+=0	//n_con
+  para[19]+= -4	//n_bop_end
+  para[20]+= -6	//n_if_end
+  para[21]+=11	//n_stmt_start
+  para[22]+=4	//n_aop_start
+  para[23]+=n_aop_plus
+  para[24]+=1	//(lvalue: x1)
+  para[25]+=1	//n_con
+  para[26]+= -4	//n_aop_end
+  para[27]+=4	//n_aop_start
+  para[28]+=n_aop_plus
+  para[29]+=2	//(lvalue: x2)
+  para[30]+=1	//n_con
+  para[31]+= -4	//n_aop_end
+  para[32]+= -11	//n_stmt_end
+  para[33]+=27	//n_stmt_start
+  para[34]+=4	//n_aop_start
+  para[35]+=n_aop_minus
+  para[36]+=0	//(lvalue: n)
+  para[37]+=1	//n_con
+  para[38]+= -4	//n_aop_end
+  para[39]+=13	//call to fib
+  para[40]+=4	//n_aop_start
+  para[41]+=n_aop_plus
+  para[42]+=1	//(lvalue: x1)
+  para[43]+=2	//(lvalue: x2)
+  para[44]+= -4	//n_aop_end
+  para[45]+=4	//n_aop_start
+  para[46]+=n_aop_xor
+  para[47]+=1	//(lvalue: x1)
+  para[48]+=2	//(lvalue: x2)
+  para[49]+= -4	//n_aop_end
+  para[50]+=4	//n_aop_start
+  para[51]+=n_aop_xor
+  para[52]+=2	//(lvalue: x2)
+  para[53]+=1	//(lvalue: x1)
+  para[54]+= -4	//n_aop_end
+  para[55]+=4	//n_aop_start
+  para[56]+=n_aop_xor
+  para[57]+=1	//(lvalue: x1)
+  para[58]+=2	//(lvalue: x2)
+  para[59]+= -4	//n_aop_end
+  para[60]+= -27	//n_stmt_end
+  para[61]+=6	//n_fi_start
+  para[62]+=4	//n_bop_start
+  para[63]+=n_eq	//n_bop
+  para[64]+=1	//(lvalue: x1)
+  para[65]+=2	//(lvalue: x2)
+  para[66]+= -4	//n_bop_end
+  para[67]+= -6	//n_fi_end
+  para[68]+= -55	//n_stmt_end fib

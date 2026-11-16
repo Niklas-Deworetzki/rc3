@@ -1,0 +1,13 @@
+begin main ()
+before := 0 + (M[5] + 0)
+M[5] += 42 + 0
+after := 0 + (M[5] + 0)
+end main(before, after)
+
+/* Output with option --print-main should look like this:
+
+    Variables at end of 'Forward.main' subroutine:
+    before = 0
+    after = 42
+
+*/

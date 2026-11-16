@@ -1,0 +1,22 @@
+#!/bin/bash
+#call like: gcc -filename.c -OOption optionfile
+# writes all output in a file corresponding to the arggument -OOption
+#Example: gcc factorization.c -O2 O3Optionfile.txt
+#Outputfile: -O2
+
+
+count=0
+agr=''
+file="$4"
+echo touch $3
+echo -n > "$3";
+while IFS= read line
+do
+	 $1 $2 $3 $agr "$line";
+	echo $'\r' >> $3;
+	echo $line >> $3;
+	for((i=0;i<5;i++));
+	do
+		./a.out >>"$3";
+	done
+done <"$file"

@@ -1,0 +1,11 @@
+#! /bin/bash
+
+VERSION=$( cd compiler ; mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout )
+rc3_jar=./compiler/target/janus-compiler-$VERSION.jar
+
+if [ ! -f $rc3_jar ]; then
+  echo "Executable JAR is not present. Building it.."
+  ( cd compiler ; mvn --quiet package -P janus-compiler )
+fi
+
+java -jar $rc3_jar $@
